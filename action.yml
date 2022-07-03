@@ -10,7 +10,7 @@ inputs:
   ClusterName:
     description: 'AKS cluster name'
     required: true
-  ClusterResourceGroup:
+  ClusterResourceGroupName:
     description: 'AKS cluster resource group name'
     required: true
   ImageVersion:
