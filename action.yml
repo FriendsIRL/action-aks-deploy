@@ -1,10 +1,41 @@
 name: 'AKS deploy'
 description: 'Deploy application service to AKS cluster'
-inputs:
-  message:  # id of input
-    description: 'Message to output'
+inputs:      
+  ChartPath:
+    description: 'Chart path'
+    required: true        
+  ClientId:
+    description: 'Service principal client Id'
+    required: true        
+  ClusterName:
+    description: 'AKS cluster name'
     required: true
-    default: 'World'
+  ClusterResourceGroup:
+    description: 'AKS cluster resource group name'
+    required: true
+  ImageVersion:
+    description: 'Image version'
+    required: true
+  KubeloginVersion:
+    description: 'Kubelogin version'
+    required: true
+    default: "v0.0.13"
+  Namespace:
+    description: 'AKS namespace'
+    required: true
+  PullPassword:
+    description: 'Pull password'
+    required: true
+  ReleaseName:
+    description: 'Helm release name'
+    required: true
+  SubscriptionId:
+    description: 'Service principal subscription Id'
+    required: true
+  TenantId:
+    description: 'Service principal tenant Id'
+    required: true
+
 outputs:
   message:
     description: "Message written"
@@ -12,9 +43,38 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Output message
-      id: doit
+    - name: "Login with SPN"
+      uses: azure/login@v1
+      with:
+        client-id: ${{ inputs.ClientID }}
+        tenant-id: ${{ inputs.TenantId }}
+        subscription-id: ${{ inputs.SubscriptionId }}
+
+    - name: "Install kube-login tool"
       shell: bash
       run: |
-        echo Hello ${{ inputs.message }}.
-        echo "::set-output name=message::${{ inputs.message }}-out"
+          curl -LO "https://github.com/Azure/kubelogin/releases/download/${{ inputs.KubeloginVersion }}/kubelogin-linux-amd64.zip"
+          sudo unzip -j "kubelogin-linux-amd64.zip" -d /usr/local/bin
+          rm -f "kubelogin-linux-amd64.zip"
+          kubelogin --version
+
+    - name: "Set K8s context"
+      uses: Azure/aks-set-context@v2
+      with:
+        resource-group: ${{ inputs.ClusterResourceGroupName }}
+        cluster-name: ${{ inputs.ClusterName }}
+        subscription: ${{ inputs.SubscriptionId }}
+        admin: "false"
+        use-kubelogin: "true"
+
+    - name: "Deploy with Helm to enva"
+      shell: bash
+      env:
+          CHART_PATH: ${{ inputs.ChartPath }}
+          RELEASE: ${{ inputs.ReleaseName }}
+          NAMESPACE: ${{ inputs.Namespace }}
+          PULL_PASSWORD: ${{ inputs.PullPassword }}
+          IMAGE_VERSION: ${{ inputs.ImageVersion }}
+      run: |
+          helm template -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values.yaml --set imageCredentials.password=${PULL_PASSWORD},image.tag=${IMAGE_VERSION}
+          helm upgrade --install -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values.yaml --set imageCredentials.password=${PULL_SECRET},image.tag=${IMAGE_VERSION} --timeout 3m0s --wait
