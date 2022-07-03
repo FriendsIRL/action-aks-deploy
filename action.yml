@@ -77,4 +77,4 @@ runs:
           IMAGE_VERSION: ${{ inputs.ImageVersion }}
       run: |
           helm template -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values.yaml --set imageCredentials.password=${PULL_PASSWORD},image.tag=${IMAGE_VERSION}
-          helm upgrade --install -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values.yaml --set imageCredentials.password=${PULL_SECRET},image.tag=${IMAGE_VERSION} --timeout 3m0s --wait
+          helm upgrade --install -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values.yaml --set imageCredentials.password=${PULL_PASSWORD},image.tag=${IMAGE_VERSION} --timeout 3m0s --wait
