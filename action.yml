@@ -1,0 +1,20 @@
+name: 'AKS deploy'
+description: 'Deploy application service to AKS cluster'
+inputs:
+  message:  # id of input
+    description: 'Message to output'
+    required: true
+    default: 'World'
+outputs:
+  message:
+    description: "Message written"
+    value: ${{ steps.doit.outputs.message }}
+runs:
+  using: "composite"
+  steps:
+    - name: Output message
+      id: doit
+      shell: bash
+      run: |
+        echo Hello ${{ inputs.message }}.
+        echo "::set-output name=message::${{ inputs.message }}-out"
