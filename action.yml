@@ -13,18 +13,12 @@ inputs:
   ClusterResourceGroupName:
     description: 'AKS cluster resource group name'
     required: true
-  ImageVersion:
-    description: 'Image version'
-    required: true
   KubeloginVersion:
     description: 'Kubelogin version'
     required: true
     default: "v0.0.13"
   Namespace:
     description: 'AKS namespace'
-    required: true
-  PullPassword:
-    description: 'Pull password'
     required: true
   ReleaseName:
     description: 'Helm release name'
@@ -73,8 +67,6 @@ runs:
           CHART_PATH: ${{ inputs.ChartPath }}
           RELEASE: ${{ inputs.ReleaseName }}
           NAMESPACE: ${{ inputs.Namespace }}
-          PULL_PASSWORD: ${{ inputs.PullPassword }}
-          IMAGE_VERSION: ${{ inputs.ImageVersion }}
       run: |
-          helm template -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values.yaml --set imageCredentials.password=${PULL_PASSWORD},image.tag=${IMAGE_VERSION}
-          helm upgrade --install -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values.yaml --set imageCredentials.password=${PULL_PASSWORD},image.tag=${IMAGE_VERSION} --timeout 3m0s --wait
+          helm template -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values-override.yaml
+          helm upgrade --install -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values-override.yaml --timeout 3m0s --wait
