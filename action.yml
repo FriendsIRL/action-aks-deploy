@@ -26,6 +26,9 @@ inputs:
   KeyvaultName:
     description: Name of key vault containing application secrets
     required: true
+  KeyvaultTenantId:
+    description: Tenant identity accessing key vault
+    required: true
   KubeloginVersion:
     description: Kubelogin version
     required: true
@@ -60,9 +63,10 @@ runs:
         imageCredentials.password: ${{ inputs.GithubToken }}
         keyvault.name: ${{ inputs.KeyvaultName }}
         keyvault.userAssignedIdentityID: ${{ inputs.UserAssignedManagedId }}
-        keyvault.tenantId: ${{ inputs.TenantId }}
+        keyvault.tenantId: ${{ inputs.KeyvaultTenantId }}
 
     - name: Show generated config
+      shell: bash
       run: |
         cat "${{ inputs.ChartPath }}/values-override.yaml"
 
