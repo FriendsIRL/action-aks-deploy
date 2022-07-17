@@ -1,46 +1,75 @@
-name: 'AKS deploy'
-description: 'Deploy application service to AKS cluster'
+name: AKS Helm deploy
+description: Deploy application service to AKS cluster
 inputs:      
   ChartPath:
-    description: 'Chart path'
-    required: true        
+    description: Chart path
+    required: true
+    default: helm
   ClientId:
-    description: 'Service principal client Id'
+    description: Service principal client Id
     required: true        
   ClusterName:
-    description: 'AKS cluster name'
+    description: AKS cluster name
+    required: true
+  ClusterNamespace:
+    description: AKS namespace
     required: true
   ClusterResourceGroupName:
-    description: 'AKS cluster resource group name'
+    description: AKS cluster resource group name
+    required: true
+  GithubToken:
+    description: Github token used when pulling images from container repository
+    required: true
+  ImageTag:
+    description: Docker image tag to deploy
+    required: true
+  KeyvaultName:
+    description: Name of key vault containing application secrets
     required: true
   KubeloginVersion:
-    description: 'Kubelogin version'
+    description: Kubelogin version
     required: true
     default: "v0.0.13"
-  Namespace:
-    description: 'AKS namespace'
-    required: true
   ReleaseName:
-    description: 'Helm release name'
+    description: Helm release name
     required: true
   SubscriptionId:
-    description: 'Service principal subscription Id'
+    description: Service principal subscription Id
     required: true
   TenantId:
-    description: 'Service principal tenant Id'
+    description: Service principal tenant Id
+    required: true
+  UserAssignedManagedId:
+    description: User assigned managed identity used to access key vault
     required: true
 
-outputs:
-  message:
-    description: "Message written"
-    value: ${{ steps.doit.outputs.message }}
 runs:
   using: "composite"
   steps:
+    - name: Download Helm artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: helm-files
+
+    - name: Generate environment specific configuration
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: ${{ inputs.ChartPath }}/values-override.yaml
+      env:
+        image.tag: ${{ inputs.ImageTag }}
+        imageCredentials.password: ${{ inputs.GithubToken }}
+        keyvault.name: ${{ inputs.KeyvaultName }}
+        keyvault.userAssignedIdentityID: ${{ inputs.UserAssignedManagedId }}
+        keyvault.tenantId: ${{ inputs.TenantId }}
+
+    - name: Show generated config
+      run: |
+        cat "${{ inputs.ChartPath }}/values-override.yaml"
+
     - name: "Login with SPN"
       uses: azure/login@v1
       with:
-        client-id: ${{ inputs.ClientID }}
+        client-id: ${{ inputs.ClientId }}
         tenant-id: ${{ inputs.TenantId }}
         subscription-id: ${{ inputs.SubscriptionId }}
 
@@ -66,7 +95,7 @@ runs:
       env:
           CHART_PATH: ${{ inputs.ChartPath }}
           RELEASE: ${{ inputs.ReleaseName }}
-          NAMESPACE: ${{ inputs.Namespace }}
+          NAMESPACE: ${{ inputs.ClusterNamespace }}
       run: |
           helm template -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values-override.yaml
           helm upgrade --install -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values-override.yaml --timeout 3m0s --wait
