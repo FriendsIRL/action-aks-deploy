@@ -17,9 +17,6 @@ inputs:
   ClusterResourceGroupName:
     description: AKS cluster resource group name
     required: true
-  GithubToken:
-    description: Github token used when pulling images from container repository
-    required: true
   ImageTag:
     description: Docker image tag to deploy
     required: true
@@ -60,7 +57,6 @@ runs:
         files: ${{ inputs.ChartPath }}/values-override.yaml
       env:
         image.tag: ${{ inputs.ImageTag }}
-        imageCredentials.password: ${{ inputs.GithubToken }}
         keyvault.name: ${{ inputs.KeyvaultName }}
         keyvault.userAssignedIdentityID: ${{ inputs.UserAssignedManagedId }}
         keyvault.tenantId: ${{ inputs.KeyvaultTenantId }}
