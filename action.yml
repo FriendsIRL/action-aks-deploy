@@ -17,15 +17,6 @@ inputs:
   ClusterResourceGroupName:
     description: AKS cluster resource group name
     required: true
-  ImageTag:
-    description: Docker image tag to deploy
-    required: true
-  KeyvaultName:
-    description: Name of key vault containing application secrets
-    required: false
-  KeyvaultTenantId:
-    description: Tenant identity accessing key vault
-    required: false
   KubeloginVersion:
     description: Kubelogin version
     required: true
@@ -39,40 +30,16 @@ inputs:
   TenantId:
     description: Service principal tenant Id
     required: true
-  UserAssignedManagedId:
-    description: User assigned managed identity used to access key vault
-    required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Download Helm artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: helm-files
-
-    - name: Generate environment specific configuration
-      if: inputs.KeyvaultName != null
-      uses: microsoft/variable-substitution@v1
-      with:
-        files: ${{ inputs.ChartPath }}/values-override.yaml
-      env:
-        image.tag: ${{ inputs.ImageTag }}
-        keyvault.name: ${{ inputs.KeyvaultName }}
-        keyvault.userAssignedIdentityID: ${{ inputs.UserAssignedManagedId }}
-        keyvault.tenantId: ${{ inputs.KeyvaultTenantId }}
-
-    - name: Show generated config
-      shell: bash
-      run: |
-        cat "${{ inputs.ChartPath }}/values-override.yaml"
-
     - name: "Login with SPN"
       uses: azure/login@v1
       with:
         client-id: ${{ inputs.ClientId }}
         tenant-id: ${{ inputs.TenantId }}
-        subscription-id: ${{ inputs.SubscriptionId }}
+        subscription-id: ${{ inputs.SubscriptionId }} 
 
     - name: "Install kube-login tool"
       shell: bash
