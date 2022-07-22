@@ -22,10 +22,10 @@ inputs:
     required: true
   KeyvaultName:
     description: Name of key vault containing application secrets
-    required: true
+    required: false
   KeyvaultTenantId:
     description: Tenant identity accessing key vault
-    required: true
+    required: false
   KubeloginVersion:
     description: Kubelogin version
     required: true
@@ -52,6 +52,7 @@ runs:
         name: helm-files
 
     - name: Generate environment specific configuration
+      if: inputs.KeyvaultName != null
       uses: microsoft/variable-substitution@v1
       with:
         files: ${{ inputs.ChartPath }}/values-override.yaml
@@ -90,7 +91,7 @@ runs:
         admin: "false"
         use-kubelogin: "true"
 
-    - name: "Deploy with Helm to enva"
+    - name: "Deploy with Helm"
       shell: bash
       env:
           CHART_PATH: ${{ inputs.ChartPath }}
