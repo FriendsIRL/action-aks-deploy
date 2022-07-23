@@ -65,5 +65,5 @@ runs:
           RELEASE: ${{ inputs.ReleaseName }}
           NAMESPACE: ${{ inputs.ClusterNamespace }}
       run: |
-          helm template -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values-override.yaml
+          #helm template -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values-override.yaml
           helm upgrade --install -n ${NAMESPACE} ${RELEASE} ${CHART_PATH} --values ${CHART_PATH}/values-override.yaml --timeout 3m0s --wait
